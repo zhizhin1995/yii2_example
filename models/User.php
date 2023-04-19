@@ -10,7 +10,9 @@ use webvimark\modules\UserManagement\models\rbacDB\Role;
 use webvimark\modules\UserManagement\models\rbacDB\Route;
 use webvimark\modules\UserManagement\UserManagementModule;
 use Yii;
+use yii\base\Exception;
 use yii\behaviors\TimestampBehavior;
+use yii\web\IdentityInterface;
 
 /**
  * This is the model class for table "user".
@@ -20,6 +22,7 @@ use yii\behaviors\TimestampBehavior;
  * @property string $email
  * @property integer $email_confirmed
  * @property string $auth_key
+ * @property string $access_token
  * @property string $password_hash
  * @property string $confirmation_token
  * @property string $bind_to_ip
@@ -29,7 +32,7 @@ use yii\behaviors\TimestampBehavior;
  * @property integer $created_at
  * @property integer $updated_at
  */
-class User extends \webvimark\modules\UserManagement\models\User
+class User extends \webvimark\modules\UserManagement\models\User implements IdentityInterface
 {
     const STATUS_ACTIVE = 1;
     const STATUS_INACTIVE = 0;
@@ -427,5 +430,44 @@ class User extends \webvimark\modules\UserManagement\models\User
         }
 
         return parent::beforeDelete();
+    }
+
+    /**
+     * @return string|bool
+     * @throws Exception
+     */
+    public static function authAPI(LoginForm $form)
+    {
+        $user = self::findByUsername($form->username);
+
+        if ($user && $user->validatePassword($form->password)) {
+            $db = Yii::$app->db;
+
+            $token = Yii::$app->security->generateRandomString();
+            $userID = $user->getId();
+
+            if (!$userID) {
+                return false;
+            }
+
+            $db->createCommand("UPDATE {{%user}} SET access_token=:token WHERE id=:userID")
+                ->bindParam('token', $token)
+                ->bindParam('userID', $userID)
+                ->execute();
+
+            return $token;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param $token
+     * @param $type
+     * @return User|UserIdentity
+     */
+    public static function findIdentityByAccessToken($token, $type = null)
+    {
+        return static::findOne(['access_token' => $token]);
     }
 }

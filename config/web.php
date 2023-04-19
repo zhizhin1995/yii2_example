@@ -20,7 +20,7 @@ $config = [
             'class' => 'yii\caching\FileCache',
         ],
 
-        
+
 /*        'user' => [
             'identityClass' => 'app\models\User',
             'enableAutoLogin' => true,
@@ -53,7 +53,7 @@ $config = [
             ],
         ],
         'db' => $db,
-        
+
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
@@ -61,9 +61,12 @@ $config = [
                  '' => 'patientss/index',
             ],
         ],
-        
+
     ],
     'modules'=>[
+        'v1' => [
+            'class' => 'app\modules\v1\api'
+        ],
         'user-management' => [
             'class' => 'webvimark\modules\UserManagement\UserManagementModule',
             // 'enableRegistration' => true,
@@ -85,7 +88,8 @@ $config = [
                     };
                 },
         ],
-    ],    
+
+    ],
     'params' => $params,
 ];
 
